@@ -21,6 +21,7 @@
 #define MCP_GENERAL_CALL_ADDRESS	  	(0x00)
 #define MCP_GENERAL_CALL_READ_COMMAND 	(0x0C)
 #define MCP_GENERAL_CALL_RESTART	 	(0xC1)
+#define MCP_GENERAL_CALL_UPDATE			(0x08)
 
 // --------------------------------------------
 // COMMANDS
@@ -28,6 +29,7 @@
 
 #define MCP_FAST_WRITE					(0x00)
 #define MCP_MULTI_WRITE					(0x40)
+#define MCP_GAIN_WRITE					(0xC0)
 
 // --------------------------------------------
 // COMMANDS
@@ -36,23 +38,24 @@
 #define MCP_VREF_VDD					(0x00)
 #define MCP_VREF_INTERNAL				(0x01)
 
-// --------------------------------------------
-// POWER-DOWN MODES
-// --------------------------------------------
+typedef enum {
+	MCP_CHANNEL_A,
+	MCP_CHANNEL_B,
+	MCP_CHANNEL_C,
+	MCP_CHANNEL_D
+}mcp4728_channel_t;
 
-#define MCP_PD_NORMAL					(0x00)
-#define MCP_PD_1_K						(0x01)
-#define MCP_PD_100_K					(0x02)
-#define MCP_PD_500_K					(0x03)
+typedef enum {
+	MCP_PD_NORMAL,
+	MCP_PD_1_K,
+	MCP_PD_100_K,
+	MCP_PD_500_K
+}mcp4728_vref_t;
 
-// --------------------------------------------
-// GAINS
-// --------------------------------------------
-
-// Applicable only when internal V_REF is selected.
-#define MCP_GAIN_ONE					(0x00)
-#define MCP_GAIN_TWO					(0x01)
-
+typedef enum {
+    MCP_GAIN_ONE,
+    MCP_GAIN_TWO
+}mcp4728_gain_t;
 
 typedef struct {
 	i2c_master_dev_handle_t dev_handle;
@@ -91,10 +94,10 @@ void mcp4728_init(mcp4728_t *mcp, i2c_master_bus_handle_t *bus_handle, uint8_t a
  *
  * @return 
  * 		  - ESP_OK on success.
- * 		  - ESP_ERR_INVALID_ARG if parameters are out of range.
+ * 		  - ESP_ERR_INVALID_ARG if mcp or mcp dev-handle is NULL.
  * 		  - ESP_FAIL on I2C communication error.
  */
-esp_err_t mcp_fast_write_channels(mcp4728_t *mcp, uint8_t pd, uint16_t chA, uint16_t chB, uint16_t chC, uint16_t chD);
+esp_err_t mcp_fast_write_channels(mcp4728_t *mcp, mcp4728_vref_t pd, uint16_t chA, uint16_t chB, uint16_t chC, uint16_t chD);
 
 /**
  * @brief Write configuration and voltage data to a single DAC channel.
@@ -113,10 +116,30 @@ esp_err_t mcp_fast_write_channels(mcp4728_t *mcp, uint8_t pd, uint16_t chA, uint
  *
  * @return 
  * 		  - ESP_OK on success.
- * 		  - ESP_ERR_INVALID_ARG if parameters are out of range.
+ * 		  - ESP_ERR_INVALID_ARG if mcp or mcp dev-handle is NULL.
  * 		  - ESP_FAIL on I2C communication error.
  */
-esp_err_t mcp_multi_write_channel(mcp4728_t *mcp, uint8_t channel, bool vref, uint8_t pd, bool gain, uint16_t data)
+esp_err_t mcp_multi_write_channel(mcp4728_t *mcp, mcp4728_channel_t channel, bool vref, mcp4728_vref_t pd, mcp4728_gain_t gain, uint16_t data);
+
+/**
+ * @brief Set the gain selection bits for all four DAC channels.
+ *
+ * 		  This function updates the gain configuration (1x or 2x) for all channels.
+ * 		  This is a fast single-byte command that does not affect the voltage 
+ *		  or VREF settings.
+ *
+ * @param mcp    Pointer to the MCP4728 device structure.
+ * @param gainA  Gain selection for Channel A (MCP_GAIN_ONE or MCP_GAIN_TWO).
+ * @param gainB  Gain selection for Channel B.
+ * @param gainC  Gain selection for Channel C.
+ * @param gainD  Gain selection for Channel D.
+ *
+ * @return 
+ * 		  - ESP_OK on success.
+ *		  - ESP_ERR_INVALID_ARG if mcp or mcp dev-handle is NULL.
+ * 		  - ESP_FAIL on I2C communication error.
+ */
+esp_err_t mcp_set_gains(mcp4728_t *mcp, mcp4728_gain_t gainA, mcp4728_gain_t gainB, mcp4728_gain_t gainC, mcp4728_gain_t gainD);
 
 /**
  * @brief Read the programmable I2C address bits from the MCP4728 using the LDAC pin.

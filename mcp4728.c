@@ -12,33 +12,37 @@ void mcp4728_init(mcp4728_t *mcp, i2c_master_bus_handle_t *bus_handle, uint8_t a
 }
 
 
-esp_err_t mcp_fast_write_channels(mcp4728_t *mcp, uint8_t pd, uint16_t chA, uint16_t chB, uint16_t chC, uint16_t chD)
+esp_err_t mcp_fast_write_channels(mcp4728_t *mcp, mcp4728_vref_t pd, uint16_t chA, uint16_t chB, uint16_t chC, uint16_t chD)
 {
     if (mcp == NULL || mcp->dev_handle == NULL) return ESP_ERR_INVALID_ARG;
 
     uint8_t b[8];
 
+    uint8_t pd_bits = ((pd & 0x03) << 4);
+
     // Channel A
-    b[0] = MCP_FAST_WRITE | ((pd & 0x03) << 4) | (uint8_t)((chA >> 8) & 0x0F); 
+    b[0] = MCP_FAST_WRITE | pd_bits | (uint8_t)((chA >> 8) & 0x0F); 
     b[1] = (uint8_t)(chA & 0xFF);
 
     // Channel B
-    b[2] = ((pd & 0x03) << 4) | (uint8_t)((chB >> 8) & 0x0F);
+    b[2] = pd_bits | (uint8_t)((chB >> 8) & 0x0F);
     b[3] = (uint8_t)(chB & 0xFF);
 
     // Channel C
-    b[4] = ((pd & 0x03) << 4) | (uint8_t)((chC >> 8) & 0x0F);
+    b[4] = pd_bits | (uint8_t)((chC >> 8) & 0x0F);
     b[5] = (uint8_t)(chC & 0xFF);
 
     // Channel D
-    b[6] = ((pd & 0x03) << 4) | (uint8_t)((chD >> 8) & 0x0F);
+    b[6] = pd_bits | (uint8_t)((chD >> 8) & 0x0F);
     b[7] = (uint8_t)(chD & 0xFF);
 
-    return i2c_master_transmit(mcp->dev_handle, b, sizeof(b), MCP_I2C_TIMEOUT_MS);
+    ESP_ERROR_CHECK(i2c_master_transmit(mcp->dev_handle, b, sizeof(b), MCP_I2C_TIMEOUT_MS));
+
+    return mcp_software_update(mcp);
 }
 
 
-esp_err_t mcp_multi_write_channel(mcp4728_t *mcp, uint8_t channel, bool vref, uint8_t pd, bool gain, uint16_t data)
+esp_err_t mcp_multi_write_channel(mcp4728_t *mcp, mcp4728_channel_t channel, bool vref, mcp4728_vref_t pd, mcp4728_gain_t gain, uint16_t data)
 {
     if (mcp == NULL || mcp->dev_handle == NULL) return ESP_ERR_INVALID_ARG;
 
@@ -52,6 +56,16 @@ esp_err_t mcp_multi_write_channel(mcp4728_t *mcp, uint8_t channel, bool vref, ui
     b[2] = (uint8_t)(data & 0xFF);
 
     return i2c_master_transmit(mcp->dev_handle, b, sizeof(b), MCP_I2C_TIMEOUT_MS);
+}
+
+
+esp_err_t mcp_set_gains(mcp4728_t *mcp, mcp4728_gain_t gainA, mcp4728_gain_t gainB, mcp4728_gain_t gainC, mcp4728_gain_t gainD)
+{
+    if (mcp == NULL || mcp->dev_handle == NULL) return ESP_ERR_INVALID_ARG;
+
+    uint8_t b = MCP_GAIN_WRITE | ((gainA & 0x01) << 3) | ((gainB & 0x01) << 2) | ((gainC & 0x01) << 1) | (gainD & 0x01);
+    
+    return i2c_master_transmit(mcp->dev_handle, b, 1, MCP_I2C_TIMEOUT_MS);
 }
 
 
