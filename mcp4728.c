@@ -99,3 +99,41 @@ uint8_t mcp_read_address_bits(gpio_num_t scl, gpio_num_t sda, gpio_num_t ldac)
 
     return (data >> 5) & 0x07;
 }
+
+
+void mcp_change_i2c_address(gpio_num_t scl, gpio_num_t sda, gpio_num_t ldac, uint8_t current_addr, uint8_t new_addr)
+{
+    uint32_t frequenzy = 100000;
+    uint32_t delay = 1000000 / (frequenzy * 2);
+
+    gpio_set_direction(scl, GPIO_MODE_OUTPUT);
+    gpio_set_direction(sda, GPIO_MODE_INPUT_OUTPUT_OD);
+    gpio_set_direction(ldac, GPIO_MODE_OUTPUT);
+
+    gpio_set_level(ldac, 1);
+    gpio_set_level(sda, 0);
+    gpio_set_level(scl, 0);
+    ets_delay_us(delay);
+
+    uint8_t byte1 = (MCP_I2C_BASE_ADDRESS | (current_addr & 0x07)) << 1
+
+    sw_i2c_write_byte(scl, sda, ldac, byte1, delay, false);
+
+    uint8_t byte2 = MCP_WRITE_I2C_ADDRESS | ((current_addr & 0x07) << 2) | 0x01;
+
+    sw_i2c_write_byte(scl, sda, ldac, byte2, delay, true);
+
+    uint8_t byte3 = MCP_WRITE_I2C_ADDRESS | ((new_addr & 0x07) << 2) | 0x02;
+
+    sw_i2c_write_byte(scl, sda, ldac, byte3, delay, false);
+
+    uint8_t byte4 = MCP_WRITE_I2C_ADDRESS | ((new_addr & 0x07) << 2) | 0x03;
+
+    sw_i2c_write_byte(scl, sda, ldac, byte4, delay, false);
+
+    gpio_set_level(sda, 0);
+    ets_delay_us(delay);
+    gpio_set_level(scl, 1);
+    ets_delay_us(delay);
+    gpio_set_level(ldac, 1);
+}
