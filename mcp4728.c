@@ -1,6 +1,19 @@
 #include "mcp4728.h"
 
-static void sw_i2c_write_byte(gpio_num_t scl, gpio_num_t sda, gpio_num_t ldac, uint8_t byte, uint32_t delay, bool trigger_ldac) {
+void mcp4728_init(mcp4728_t *mcp, i2c_master_bus_handle_t *bus_handle, uint8_t addr_bits, uint32_t i2c_freq)
+{
+    i2c_device_config_t dev_cfg = {
+        .dev_addr_length = I2C_ADDR_BIT_LEN_7,
+        .device_address = MCP_I2C_BASE_ADDRESS | addr_bits,
+        .scl_speed_hz = i2c_freq,
+    };
+
+    ESP_ERROR_CHECK(i2c_master_bus_add_device(*bus_handle, &dev_cfg, &mcp->dev_handle));
+}
+
+
+static void sw_i2c_write_byte(gpio_num_t scl, gpio_num_t sda, gpio_num_t ldac, uint8_t byte, uint32_t delay, bool trigger_ldac)
+{
     for (int i = 0; i < 8; i++) {
         gpio_set_level(sda, (byte << i) & 0x80 ? 1 : 0);
         
@@ -26,7 +39,8 @@ static void sw_i2c_write_byte(gpio_num_t scl, gpio_num_t sda, gpio_num_t ldac, u
 }
 
 
-static uint8_t sw_i2c_read_byte(gpio_num_t scl, gpio_num_t sda, uint32_t delay, bool ack) {
+static uint8_t sw_i2c_read_byte(gpio_num_t scl, gpio_num_t sda, uint32_t delay, bool ack)
+{
     uint8_t byte = 0;
     gpio_set_direction(sda, GPIO_MODE_INPUT);
     
