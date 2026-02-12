@@ -10,4 +10,6 @@
 #define MCP_GENERAL_CALL_READ_COMMAND (0x0C)
 #define MCP_GENERAL_CALL_RESTART	  (0xC1)
 
+uint8_t mcp_read_address_bits(gpio_num_t scl, gpio_num_t sda, gpio_num_t ldac);
+
 #endif
