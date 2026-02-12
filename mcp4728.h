@@ -29,6 +29,8 @@
 
 #define MCP_FAST_WRITE					(0x00)
 #define MCP_MULTI_WRITE					(0x40)
+#define MCP_SEQ_WRITE					(0x50)
+#define MCP_SINGLE_WRITE				(0x58)
 #define MCP_VREF_WRITE					(0x80)
 #define MCP_PD_WRITE					(0xA0)
 #define MCP_GAIN_WRITE					(0xC0)
@@ -58,6 +60,14 @@ typedef enum {
     MCP_GAIN_ONE,
     MCP_GAIN_TWO
 }mcp4728_gain_t;
+
+typedef struct {
+    mcp4728_channel_t channel;
+    bool vref;
+    mcp4728_pd_t pd;
+    mcp4728_gain_t gain;
+    uint16_t data;
+} mcp4728_channel_config_t;
 
 typedef struct {
 	i2c_master_dev_handle_t dev_handle;
@@ -101,27 +111,42 @@ void mcp4728_init(mcp4728_t *mcp, i2c_master_bus_handle_t *bus_handle, uint8_t a
  */
 esp_err_t mcp_fast_write_channels(mcp4728_t *mcp, mcp4728_pd_t pd, uint16_t chA, uint16_t chB, uint16_t chC, uint16_t chD);
 
+
+/**
+ * @brief Write configuration data to multiple DAC channels in a single transaction.
+ *
+ * 		  This function optimizes I2C bus usage by bundling configuration data for 
+ * 		  up to four channels into one transmission. It iterates through the provided 
+ * 		  array of configurations and constructs a Multi-Write command sequence.
+ *
+ * @param mcp           Pointer to the MCP4728 device structure.
+ * @param num_channels  Number of channels to be updated (1-4).
+ * @param configs       Array of mcp4728_channel_config_t structures.
+ *
+ * @return 
+ * 		  - ESP_OK on success.
+ * 		  - ESP_ERR_INVALID_ARG if pointers are NULL or num_channels > 4.
+ * 		  - ESP_FAIL on I2C communication error.
+ */
+esp_err_t mcp_multi_write_channel(mcp4728_t *mcp, uint8_t num_channels, mcp4728_channel_config_t *configs);
+
 /**
  * @brief Write configuration and voltage data to a single DAC channel.
  *
- * 		  This function uses the Multi-Write command to update a specific channel's 
+ * 		  This function uses the Single-Write command to update a specific channel's 
  * 		  voltage along with its configuration bits, including voltage reference, 
  * 		  power-down mode, and gain. The output is updated immediately after 
  * 		  the transmission.
  *
  * @param mcp      Pointer to the MCP4728 device structure.
- * @param channel  The target channel to update (0=A, 1=B, 2=C, 3=D).
- * @param vref     Voltage reference selection (false = VDD, true = Internal).
- * @param pd       Power-down mode bits (0=Normal, 1=1kOhm, 2=100kOhm, 3=500kOhm).
- * @param gain     Gain selection (false = 1x, true = 2x).
- * @param data     12-bit raw DAC value (0-4095).
+ * @param configs  Pointer to mcp4728_channel_config_t structure.
  *
  * @return 
  * 		  - ESP_OK on success.
  * 		  - ESP_ERR_INVALID_ARG if mcp or mcp dev-handle is NULL.
  * 		  - ESP_FAIL on I2C communication error.
  */
-esp_err_t mcp_multi_write_channel(mcp4728_t *mcp, mcp4728_channel_t channel, bool vref, mcp4728_pd_t pd, mcp4728_gain_t gain, uint16_t data);
+esp_err_t mcp_single_write(mcp4728_t *mcp, mcp4728_channel_config_t *config);
 
 /**
  * @brief Configure the voltage reference source for each DAC channel.

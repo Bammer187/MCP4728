@@ -42,18 +42,42 @@ esp_err_t mcp_fast_write_channels(mcp4728_t *mcp, mcp4728_vref_t pd, uint16_t ch
 }
 
 
-esp_err_t mcp_multi_write_channel(mcp4728_t *mcp, mcp4728_channel_t channel, bool vref, mcp4728_vref_t pd, mcp4728_gain_t gain, uint16_t data)
+esp_err_t mcp_multi_write_channel(mcp4728_t *mcp, uint8_t num_channels, mcp4728_channel_config_t *configs)
+{
+    if (mcp == NULL || mcp->dev_handle == NULL || num_channels > 4) return ESP_ERR_INVALID_ARG;
+
+    uint8_t b[12];
+    
+    for (int i = 0; i < num_channels; i++) {
+        uint8_t offset = i * 3;
+        b[offset] = MCP_MULTI_WRITE | ((configs[i].channel & 0x03) << 1);
+
+        b[offset + 1] = (configs[i].vref << 7) | 
+                        ((configs[i].pd & 0x03) << 5) | 
+                        (configs[i].gain << 4) | 
+                        (uint8_t)((configs[i].data >> 8) & 0x0F);
+
+        b[offset + 2] = (uint8_t)(configs[i].data & 0xFF);
+    }
+
+    return i2c_master_transmit(mcp->dev_handle, b, num_channels * 3, MCP_I2C_TIMEOUT_MS);
+}
+
+
+esp_err_t mcp_single_write(mcp4728_t *mcp, mcp4728_channel_config_t *config)
 {
     if (mcp == NULL || mcp->dev_handle == NULL) return ESP_ERR_INVALID_ARG;
 
     uint8_t b[3];
 
-    b[0] = MCP_MULTI_WRITE | ((channel & 0x03) << 1);
-    b[1] = ((vref ? 1 : 0) << 7) | 
-           ((pd & 0x03) << 5)    | 
-           ((gain ? 1 : 0) << 4) | 
-           (uint8_t)((data >> 8) & 0x0F);
-    b[2] = (uint8_t)(data & 0xFF);
+    b[0] =  MCP_SINGLE_WRITE | ((config[i].channel & 0x03) << 1);
+    
+    b[1] =  (config[i].vref << 7) | 
+            ((config[i].pd & 0x03) << 5) | 
+            (config[i].gain << 4) | 
+            (uint8_t)((config[i].data >> 8) & 0x0F);
+
+    b[2] =  (uint8_t)(config[i].data & 0xFF);
 
     return i2c_master_transmit(mcp->dev_handle, b, sizeof(b), MCP_I2C_TIMEOUT_MS);
 }
