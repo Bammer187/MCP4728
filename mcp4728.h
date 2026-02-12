@@ -109,8 +109,7 @@ void mcp4728_init(mcp4728_t *mcp, i2c_master_bus_handle_t *bus_handle, uint8_t a
  * 		  - ESP_ERR_INVALID_ARG if mcp or mcp dev-handle is NULL.
  * 		  - ESP_FAIL on I2C communication error.
  */
-esp_err_t mcp_fast_write_channels(mcp4728_t *mcp, mcp4728_pd_t pd, uint16_t chA, uint16_t chB, uint16_t chC, uint16_t chD);
-
+esp_err_t mcp_fast_write(mcp4728_t *mcp, mcp4728_pd_t pd, uint16_t chA, uint16_t chB, uint16_t chC, uint16_t chD);
 
 /**
  * @brief Write configuration data to multiple DAC channels in a single transaction.
@@ -128,7 +127,7 @@ esp_err_t mcp_fast_write_channels(mcp4728_t *mcp, mcp4728_pd_t pd, uint16_t chA,
  * 		  - ESP_ERR_INVALID_ARG if pointers are NULL or num_channels > 4.
  * 		  - ESP_FAIL on I2C communication error.
  */
-esp_err_t mcp_multi_write_channel(mcp4728_t *mcp, uint8_t num_channels, mcp4728_channel_config_t *configs);
+esp_err_t mcp_multi_write(mcp4728_t *mcp, uint8_t num_channels, mcp4728_channel_config_t *configs);
 
 /**
  * @brief Write configuration and voltage data to a single DAC channel.
@@ -147,6 +146,24 @@ esp_err_t mcp_multi_write_channel(mcp4728_t *mcp, uint8_t num_channels, mcp4728_
  * 		  - ESP_FAIL on I2C communication error.
  */
 esp_err_t mcp_single_write(mcp4728_t *mcp, mcp4728_channel_config_t *config);
+
+/**
+ * @brief Write full configuration settings to multiple channels sequentially.
+ *
+ * 		  This function uses the Sequential Write command to update the DAC input 
+ *		  registers. It starts from Channel A and continues for up to four channels 
+ * 		  based on the provided configuration array. This command updates the 
+ *		  DAC value, VREF, Power-Down, and Gain bits in a single transaction.
+ *
+ * @param mcp     Pointer to the MCP4728 device structure.
+ * @param config  Pointer to mcp4728_channel_config_t structure.
+ *
+ * @return 
+ * 		  - ESP_OK on success.
+ * 		  - ESP_ERR_INVALID_ARG if mcp or mcp dev-handle is NULL.
+ * 		  - ESP_FAIL on I2C communication error.
+ */
+esp_err_t mcp_seq_write(mcp4728_t *mcp, mcp4728_channel_config_t *config)
 
 /**
  * @brief Configure the voltage reference source for each DAC channel.

@@ -12,7 +12,7 @@ void mcp4728_init(mcp4728_t *mcp, i2c_master_bus_handle_t *bus_handle, uint8_t a
 }
 
 
-esp_err_t mcp_fast_write_channels(mcp4728_t *mcp, mcp4728_vref_t pd, uint16_t chA, uint16_t chB, uint16_t chC, uint16_t chD)
+esp_err_t mcp_fast_write(mcp4728_t *mcp, mcp4728_vref_t pd, uint16_t chA, uint16_t chB, uint16_t chC, uint16_t chD)
 {
     if (mcp == NULL || mcp->dev_handle == NULL) return ESP_ERR_INVALID_ARG;
 
@@ -42,7 +42,7 @@ esp_err_t mcp_fast_write_channels(mcp4728_t *mcp, mcp4728_vref_t pd, uint16_t ch
 }
 
 
-esp_err_t mcp_multi_write_channel(mcp4728_t *mcp, uint8_t num_channels, mcp4728_channel_config_t *configs)
+esp_err_t mcp_multi_write(mcp4728_t *mcp, uint8_t num_channels, mcp4728_channel_config_t *configs)
 {
     if (mcp == NULL || mcp->dev_handle == NULL || num_channels > 4) return ESP_ERR_INVALID_ARG;
 
@@ -71,15 +71,37 @@ esp_err_t mcp_single_write(mcp4728_t *mcp, mcp4728_channel_config_t *config)
     uint8_t b[3];
 
     b[0] =  MCP_SINGLE_WRITE | ((config[i].channel & 0x03) << 1);
-    
-    b[1] =  (config[i].vref << 7) | 
-            ((config[i].pd & 0x03) << 5) | 
-            (config[i].gain << 4) | 
-            (uint8_t)((config[i].data >> 8) & 0x0F);
 
-    b[2] =  (uint8_t)(config[i].data & 0xFF);
+    b[1] =  (config.vref << 7) | 
+            ((config.pd & 0x03) << 5) | 
+            (config.gain << 4) | 
+            (uint8_t)((config.data >> 8) & 0x0F);
+
+    b[2] =  (uint8_t)(config.data & 0xFF);
 
     return i2c_master_transmit(mcp->dev_handle, b, sizeof(b), MCP_I2C_TIMEOUT_MS);
+}
+
+
+esp_err_t mcp_seq_write(mcp4728_t *mcp, mcp4728_channel_config_t *config)
+{
+    if (mcp == NULL || mcp->dev_handle == NULL) return ESP_ERR_INVALID_ARG;
+
+    uint8_t b[10];
+
+    b[0] = MCP_SEQ_WRITE | ((config.channel & 0x03) << 1);
+
+    for(int i = 0; i < 4 - config.channel; i++) {
+        uint8_t offset = i * 2;
+        b[offset + 1]   =   (config.vref << 7) | 
+                            ((config.pd & 0x03) << 5) | 
+                            (config.gain << 4) | 
+                            (uint8_t)((config.data >> 8) & 0x0F);
+
+        b[offset + 2] =     (uint8_t)(config.data & 0xFF);
+    }
+
+    return i2c_master_transmit(mcp->dev_handle, b, 3 + config.channel * 2, MCP_I2C_TIMEOUT_MS);
 }
 
 
