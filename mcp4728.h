@@ -29,6 +29,7 @@
 
 #define MCP_FAST_WRITE					(0x00)
 #define MCP_MULTI_WRITE					(0x40)
+#define MCP_VREF_WRITE					(0x80)
 #define MCP_PD_WRITE					(0xA0)
 #define MCP_GAIN_WRITE					(0xC0)
 
@@ -121,6 +122,26 @@ esp_err_t mcp_fast_write_channels(mcp4728_t *mcp, mcp4728_pd_t pd, uint16_t chA,
  * 		  - ESP_FAIL on I2C communication error.
  */
 esp_err_t mcp_multi_write_channel(mcp4728_t *mcp, mcp4728_channel_t channel, bool vref, mcp4728_pd_t pd, mcp4728_gain_t gain, uint16_t data);
+
+/**
+ * @brief Configure the voltage reference source for each DAC channel.
+ *
+ * 		  This function sets the VREF bit for each of the four channels. Each channel 
+ * 		  can independently choose between an external reference (VDD) or the 
+ *		  internal 2.048V precision voltage reference.
+ *
+ * @param mcp    Pointer to the MCP4728 device structure.
+ * @param vrefA  Reference for Ch A (false = VDD, true = Internal 2.048V).
+ * @param vrefB  Reference for Ch B.
+ * @param vrefC  Reference for Ch C.
+ * @param vrefD  Reference for Ch D.
+ *
+ * @return 
+ * 		  - ESP_OK on success.
+ * 		  - ESP_ERR_INVALID_ARG if mcp or mcp dev-handle is NULL.
+ * 		  - ESP_FAIL on I2C communication error.
+ */
+esp_err_t mcp_set_vref(mcp4728_t *mcp, bool vrefA, bool vrefB, bool vrefC, bool vrefD);
 
 /**
  * @brief Configure the power-down modes for all four DAC channels.

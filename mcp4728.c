@@ -59,6 +59,16 @@ esp_err_t mcp_multi_write_channel(mcp4728_t *mcp, mcp4728_channel_t channel, boo
 }
 
 
+esp_err_t mcp_set_vref(mcp4728_t *mcp, bool vrefA, bool vrefB, bool vrefC, bool vrefD)
+{
+    if (mcp == NULL || mcp->dev_handle == NULL) return ESP_ERR_INVALID_ARG;
+
+    uint8_t b = MCP_VREF_WRITE | ((vrefA ? 1 : 0) << 3) | ((vrefB ? 1 : 0) << 2) | ((vrefC ? 1 : 0) << 1) | (vrefD ? 1 : 0);
+    
+    return i2c_master_transmit(mcp->dev_handle, b, 1, MCP_I2C_TIMEOUT_MS);
+}
+
+
 esp_err_t mcp_set_power_down(mcp4728_t *mcp, mcp4728_pd_t pdA, mcp4728_pd_t pdB, mcp4728_pd_t pdC, mcp4728_pd_t pdD)
 {
     if (mcp == NULL || mcp->dev_handle == NULL) return ESP_ERR_INVALID_ARG;
