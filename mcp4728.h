@@ -30,6 +30,13 @@
 #define MCP_MULTI_WRITE					(0x40)
 
 // --------------------------------------------
+// COMMANDS
+// --------------------------------------------
+
+#define MCP_VREF_VDD					(0x00)
+#define MCP_VREF_INTERNAL				(0x01)
+
+// --------------------------------------------
 // POWER-DOWN MODES
 // --------------------------------------------
 
@@ -37,6 +44,15 @@
 #define MCP_PD_1_K						(0x01)
 #define MCP_PD_100_K					(0x02)
 #define MCP_PD_500_K					(0x03)
+
+// --------------------------------------------
+// GAINS
+// --------------------------------------------
+
+// Applicable only when internal V_REF is selected.
+#define MCP_GAIN_ONE					(0x00)
+#define MCP_GAIN_TWO					(0x01)
+
 
 typedef struct {
 	i2c_master_dev_handle_t dev_handle;
@@ -75,9 +91,32 @@ void mcp4728_init(mcp4728_t *mcp, i2c_master_bus_handle_t *bus_handle, uint8_t a
  *
  * @return 
  * 		  - ESP_OK on success.
+ * 		  - ESP_ERR_INVALID_ARG if parameters are out of range.
  * 		  - ESP_FAIL on I2C communication error.
  */
-esp_err_t mcp_fast_write_channels(mcp4728_t *mcp, uint16_t chA, uint16_t chB, uint16_t chC, uint16_t chD);
+esp_err_t mcp_fast_write_channels(mcp4728_t *mcp, uint8_t pd, uint16_t chA, uint16_t chB, uint16_t chC, uint16_t chD);
+
+/**
+ * @brief Write configuration and voltage data to a single DAC channel.
+ *
+ * 		  This function uses the Multi-Write command to update a specific channel's 
+ * 		  voltage along with its configuration bits, including voltage reference, 
+ * 		  power-down mode, and gain. The output is updated immediately after 
+ * 		  the transmission.
+ *
+ * @param mcp      Pointer to the MCP4728 device structure.
+ * @param channel  The target channel to update (0=A, 1=B, 2=C, 3=D).
+ * @param vref     Voltage reference selection (false = VDD, true = Internal).
+ * @param pd       Power-down mode bits (0=Normal, 1=1kOhm, 2=100kOhm, 3=500kOhm).
+ * @param gain     Gain selection (false = 1x, true = 2x).
+ * @param data     12-bit raw DAC value (0-4095).
+ *
+ * @return 
+ * 		  - ESP_OK on success.
+ * 		  - ESP_ERR_INVALID_ARG if parameters are out of range.
+ * 		  - ESP_FAIL on I2C communication error.
+ */
+esp_err_t mcp_multi_write_channel(mcp4728_t *mcp, uint8_t channel, bool vref, uint8_t pd, bool gain, uint16_t data)
 
 /**
  * @brief Read the programmable I2C address bits from the MCP4728 using the LDAC pin.
@@ -111,4 +150,5 @@ uint8_t mcp_read_address_bits(gpio_num_t scl, gpio_num_t sda, gpio_num_t ldac);
  * @param new_addr     The new 3-bit address (0-7) to be programmed.
  */
 void mcp_change_i2c_address(gpio_num_t scl, gpio_num_t sda, gpio_num_t ldac, uint8_t current_addr, uint8_t new_addr);
+
 #endif

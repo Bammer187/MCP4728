@@ -12,30 +12,48 @@ void mcp4728_init(mcp4728_t *mcp, i2c_master_bus_handle_t *bus_handle, uint8_t a
 }
 
 
-esp_err_t mcp_fast_write_channels(mcp4728_t *mcp, uint16_t chA, uint16_t chB, uint16_t chC, uint16_t chD)
+esp_err_t mcp_fast_write_channels(mcp4728_t *mcp, uint8_t pd, uint16_t chA, uint16_t chB, uint16_t chC, uint16_t chD)
 {
+    if (mcp == NULL || mcp->dev_handle == NULL) return ESP_ERR_INVALID_ARG;
+
     uint8_t b[8];
 
-    const uint8_t PD = MCP_PD_NORMAL;
-
     // Channel A
-    b[0] = MCP_FAST_WRITE | (PD << 4) | (uint8_t)((chA >> 8) & 0x0F); 
+    b[0] = MCP_FAST_WRITE | ((pd & 0x03) << 4) | (uint8_t)((chA >> 8) & 0x0F); 
     b[1] = (uint8_t)(chA & 0xFF);
 
     // Channel B
-    b[2] = (PD << 4) | (uint8_t)((chB >> 8) & 0x0F);
+    b[2] = ((pd & 0x03) << 4) | (uint8_t)((chB >> 8) & 0x0F);
     b[3] = (uint8_t)(chB & 0xFF);
 
     // Channel C
-    b[4] = (PD << 4) | (uint8_t)((chC >> 8) & 0x0F);
+    b[4] = ((pd & 0x03) << 4) | (uint8_t)((chC >> 8) & 0x0F);
     b[5] = (uint8_t)(chC & 0xFF);
 
     // Channel D
-    b[6] = (PD << 4) | (uint8_t)((chD >> 8) & 0x0F);
+    b[6] = ((pd & 0x03) << 4) | (uint8_t)((chD >> 8) & 0x0F);
     b[7] = (uint8_t)(chD & 0xFF);
 
     return i2c_master_transmit(mcp->dev_handle, b, sizeof(b), MCP_I2C_TIMEOUT_MS);
 }
+
+
+esp_err_t mcp_multi_write_channel(mcp4728_t *mcp, uint8_t channel, bool vref, uint8_t pd, bool gain, uint16_t data)
+{
+    if (mcp == NULL || mcp->dev_handle == NULL) return ESP_ERR_INVALID_ARG;
+
+    uint8_t b[3];
+
+    b[0] = MCP_MULTI_WRITE | ((channel & 0x03) << 1);
+    b[1] = ((vref ? 1 : 0) << 7) | 
+           ((pd & 0x03) << 5)    | 
+           ((gain ? 1 : 0) << 4) | 
+           (uint8_t)((data >> 8) & 0x0F);
+    b[2] = (uint8_t)(data & 0xFF);
+
+    return i2c_master_transmit(mcp->dev_handle, b, sizeof(b), MCP_I2C_TIMEOUT_MS);
+}
+
 
 static void sw_i2c_write_byte(gpio_num_t scl, gpio_num_t sda, gpio_num_t ldac, uint8_t byte, uint32_t delay, bool trigger_ldac)
 {
