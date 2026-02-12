@@ -5,27 +5,38 @@
 #include "driver/i2c_master.h"
 #include "rom/ets_sys.h"
 
+#define MCP_I2C_TIMEOUT_MS 5000
+
 // --------------------------------------------
 // I2C ADDRESS
 // --------------------------------------------
 
-#define MCP_I2C_BASE_ADDRESS 	(0x60)
-#define MCP_WRITE_I2C_ADDRESS	(0x60)
+#define MCP_I2C_BASE_ADDRESS 			(0x60)
+#define MCP_WRITE_I2C_ADDRESS			(0x60)
 
 // --------------------------------------------
 // GENERAL CALL
 // --------------------------------------------
 
-#define MCP_GENERAL_CALL_ADDRESS	  (0x00)
-#define MCP_GENERAL_CALL_READ_COMMAND (0x0C)
-#define MCP_GENERAL_CALL_RESTART	  (0xC1)
+#define MCP_GENERAL_CALL_ADDRESS	  	(0x00)
+#define MCP_GENERAL_CALL_READ_COMMAND 	(0x0C)
+#define MCP_GENERAL_CALL_RESTART	 	(0xC1)
 
 // --------------------------------------------
 // COMMANDS
 // --------------------------------------------
 
-#define MCP_FAST_WRITE		(0x00)
-#define MCP_MULTI_WRITE		(0x40)
+#define MCP_FAST_WRITE					(0x00)
+#define MCP_MULTI_WRITE					(0x40)
+
+// --------------------------------------------
+// POWER-DOWN MODES
+// --------------------------------------------
+
+#define MCP_PD_NORMAL					(0x00)
+#define MCP_PD_1_K						(0x01)
+#define MCP_PD_100_K					(0x02)
+#define MCP_PD_500_K					(0x03)
 
 typedef struct {
 	i2c_master_dev_handle_t dev_handle;
@@ -45,6 +56,28 @@ typedef struct {
  * @param i2c_freq     I2C clock speed in Hz.
  */
 void mcp4728_init(mcp4728_t *mcp, i2c_master_bus_handle_t *bus_handle, uint8_t addr_bits, uint32_t i2c_freq);
+
+/**
+ * @brief Update all four DAC output channels using the Fast Write command.
+ *
+ * 		  This function quickly updates the DAC registers for channels A, B, C, and D 
+ * 		  in a single I2C transaction. It uses the "Fast Write" protocol, which 
+ * 		  minimizes bus overhead but does not modify the EEPROM or configuration 
+ * 		  bits (such as Voltage Reference or Gain).
+ * 
+ * 		  Note: The input values are masked to 12-bit (0-4095).
+ *
+ * @param mcp    Pointer to the MCP4728 device structure.
+ * @param chA    12-bit value for Channel A.
+ * @param chB    12-bit value for Channel B.
+ * @param chC    12-bit value for Channel C.
+ * @param chD    12-bit value for Channel D.
+ *
+ * @return 
+ * 		  - ESP_OK on success.
+ * 		  - ESP_FAIL on I2C communication error.
+ */
+esp_err_t mcp_fast_write_channels(mcp4728_t *mcp, uint16_t chA, uint16_t chB, uint16_t chC, uint16_t chD);
 
 /**
  * @brief Read the programmable I2C address bits from the MCP4728 using the LDAC pin.

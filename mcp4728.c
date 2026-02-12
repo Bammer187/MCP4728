@@ -4,13 +4,38 @@ void mcp4728_init(mcp4728_t *mcp, i2c_master_bus_handle_t *bus_handle, uint8_t a
 {
     i2c_device_config_t dev_cfg = {
         .dev_addr_length = I2C_ADDR_BIT_LEN_7,
-        .device_address = MCP_I2C_BASE_ADDRESS | addr_bits,
+        .device_address = MCP_I2C_BASE_ADDRESS | (addr_bits & 0x07),
         .scl_speed_hz = i2c_freq,
     };
 
     ESP_ERROR_CHECK(i2c_master_bus_add_device(*bus_handle, &dev_cfg, &mcp->dev_handle));
 }
 
+
+esp_err_t mcp_fast_write_channels(mcp4728_t *mcp, uint16_t chA, uint16_t chB, uint16_t chC, uint16_t chD)
+{
+    uint8_t b[8];
+
+    const uint8_t PD = MCP_PD_NORMAL;
+
+    // Channel A
+    b[0] = MCP_FAST_WRITE | (PD << 4) | (uint8_t)((chA >> 8) & 0x0F); 
+    b[1] = (uint8_t)(chA & 0xFF);
+
+    // Channel B
+    b[2] = (PD << 4) | (uint8_t)((chB >> 8) & 0x0F);
+    b[3] = (uint8_t)(chB & 0xFF);
+
+    // Channel C
+    b[4] = (PD << 4) | (uint8_t)((chC >> 8) & 0x0F);
+    b[5] = (uint8_t)(chC & 0xFF);
+
+    // Channel D
+    b[6] = (PD << 4) | (uint8_t)((chD >> 8) & 0x0F);
+    b[7] = (uint8_t)(chD & 0xFF);
+
+    return i2c_master_transmit(mcp->dev_handle, b, sizeof(b), MCP_I2C_TIMEOUT_MS);
+}
 
 static void sw_i2c_write_byte(gpio_num_t scl, gpio_num_t sda, gpio_num_t ldac, uint8_t byte, uint32_t delay, bool trigger_ldac)
 {
