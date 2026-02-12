@@ -59,6 +59,19 @@ esp_err_t mcp_multi_write_channel(mcp4728_t *mcp, mcp4728_channel_t channel, boo
 }
 
 
+esp_err_t mcp_set_power_down(mcp4728_t *mcp, mcp4728_pd_t pdA, mcp4728_pd_t pdB, mcp4728_pd_t pdC, mcp4728_pd_t pdD)
+{
+    if (mcp == NULL || mcp->dev_handle == NULL) return ESP_ERR_INVALID_ARG;
+
+    uint8_t b[2];
+
+    b[0] = MCP_PD_WRITE | ((pdA & 0x03) << 2) | ((pdB & 0x03) << 2);
+    b[1] = ((pdC & 0x03) << 6) | ((pdD & 0x03) << 4);
+
+    return i2c_master_transmit(mcp->dev_handle, b, sizeof(b), MCP_I2C_TIMEOUT_MS);
+}
+
+
 esp_err_t mcp_set_gains(mcp4728_t *mcp, mcp4728_gain_t gainA, mcp4728_gain_t gainB, mcp4728_gain_t gainC, mcp4728_gain_t gainD)
 {
     if (mcp == NULL || mcp->dev_handle == NULL) return ESP_ERR_INVALID_ARG;

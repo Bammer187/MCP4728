@@ -29,6 +29,7 @@
 
 #define MCP_FAST_WRITE					(0x00)
 #define MCP_MULTI_WRITE					(0x40)
+#define MCP_PD_WRITE					(0xA0)
 #define MCP_GAIN_WRITE					(0xC0)
 
 // --------------------------------------------
@@ -50,7 +51,7 @@ typedef enum {
 	MCP_PD_1_K,
 	MCP_PD_100_K,
 	MCP_PD_500_K
-}mcp4728_vref_t;
+}mcp4728_pd_t;
 
 typedef enum {
     MCP_GAIN_ONE,
@@ -97,7 +98,7 @@ void mcp4728_init(mcp4728_t *mcp, i2c_master_bus_handle_t *bus_handle, uint8_t a
  * 		  - ESP_ERR_INVALID_ARG if mcp or mcp dev-handle is NULL.
  * 		  - ESP_FAIL on I2C communication error.
  */
-esp_err_t mcp_fast_write_channels(mcp4728_t *mcp, mcp4728_vref_t pd, uint16_t chA, uint16_t chB, uint16_t chC, uint16_t chD);
+esp_err_t mcp_fast_write_channels(mcp4728_t *mcp, mcp4728_pd_t pd, uint16_t chA, uint16_t chB, uint16_t chC, uint16_t chD);
 
 /**
  * @brief Write configuration and voltage data to a single DAC channel.
@@ -119,7 +120,28 @@ esp_err_t mcp_fast_write_channels(mcp4728_t *mcp, mcp4728_vref_t pd, uint16_t ch
  * 		  - ESP_ERR_INVALID_ARG if mcp or mcp dev-handle is NULL.
  * 		  - ESP_FAIL on I2C communication error.
  */
-esp_err_t mcp_multi_write_channel(mcp4728_t *mcp, mcp4728_channel_t channel, bool vref, mcp4728_vref_t pd, mcp4728_gain_t gain, uint16_t data);
+esp_err_t mcp_multi_write_channel(mcp4728_t *mcp, mcp4728_channel_t channel, bool vref, mcp4728_pd_t pd, mcp4728_gain_t gain, uint16_t data);
+
+/**
+ * @brief Configure the power-down modes for all four DAC channels.
+ *
+ * 		  This function updates the power-down (PD) bits for each channel, allowing 
+ * 		  them to be set to Normal mode or one of three power-down levels with 
+ * 		  different internal resistive loads to ground (1kΩ, 100kΩ, or 500kΩ). 
+ * 		  This is useful for reducing power consumption when specific outputs are not in use.
+ *
+ * @param mcp    Pointer to the MCP4728 device structure.
+ * @param pdA    Power-down mode for Channel A (using mcp4728_pd_t enum).
+ * @param pdB    Power-down mode for Channel B.
+ * @param pdC    Power-down mode for Channel C.
+ * @param pdD    Power-down mode for Channel D.
+ *
+ * @return 
+ * 		  - ESP_OK on success.
+ * 		  - ESP_ERR_INVALID_ARG if mcp or mcp dev-handle is NULL.
+ * 		  - ESP_FAIL on I2C communication error.
+ */
+esp_err_t mcp_set_power_down(mcp4728_t *mcp, mcp4728_pd_t pdA, mcp4728_pd_t pdB, mcp4728_pd_t pdC, mcp4728_pd_t pdD);
 
 /**
  * @brief Set the gain selection bits for all four DAC channels.
