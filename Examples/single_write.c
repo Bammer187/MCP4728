@@ -26,7 +26,7 @@ static const char *TAG = "MCP_TEST";
 #define I2C_FREQUENZY 100000
 #define I2C_ADDRESS 0 // <=7
 
-float voltage_steps = 3.3 / 4096;
+float voltage_steps = 3.3f / 4096.0f;
 
 void app_main(void)
 {
