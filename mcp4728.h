@@ -163,7 +163,7 @@ esp_err_t mcp_single_write(mcp4728_t *mcp, mcp4728_channel_config_t *config);
  * 		  - ESP_ERR_INVALID_ARG if mcp or mcp dev-handle is NULL.
  * 		  - ESP_FAIL on I2C communication error.
  */
-esp_err_t mcp_seq_write(mcp4728_t *mcp, mcp4728_channel_config_t *config)
+esp_err_t mcp_seq_write(mcp4728_t *mcp, mcp4728_channel_config_t *config);
 
 /**
  * @brief Configure the voltage reference source for each DAC channel.
