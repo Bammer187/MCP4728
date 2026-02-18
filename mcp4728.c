@@ -1,3 +1,10 @@
+/*
+ * Copyright (c) 2026 Lukas Bammer
+ *
+ * This source code is licensed under the MIT license found in the
+ * LICENSE file in the root directory of this source tree.
+ */
+
 #include "mcp4728.h"
 
 void mcp4728_init(mcp4728_t *mcp, i2c_master_bus_handle_t *bus_handle, uint8_t addr_bits, uint32_t i2c_freq)
