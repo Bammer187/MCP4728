@@ -142,30 +142,30 @@ static void sw_i2c_write_byte(gpio_num_t scl, gpio_num_t sda, gpio_num_t ldac, u
 {
     for (int i = 0; i < 8; i++) {
         gpio_set_level(sda, (byte << i) & 0x80 ? 1 : 0);
-        
-        // Pull LDAC low durning eigth bit
-        if (i == 7 && trigger_ldac) {
-            gpio_set_level(ldac, 0);
-        }
-        
-        ets_delay_us(delay);
+
         gpio_set_level(scl, 1);
         ets_delay_us(delay);
         gpio_set_level(scl, 0);
+        ets_delay_us(delay);
     }
 
+    if (trigger_ldac) {
+        gpio_set_level(ldac, 0);
+    }
     // ACK Phase
     gpio_set_level(sda, 1);
     gpio_set_direction(sda, GPIO_MODE_INPUT);
-    ets_delay_us(delay);
     gpio_set_level(scl, 1);
+    int ack = gpio_get_level(sda);
     ets_delay_us(delay);
     gpio_set_level(scl, 0);
-    gpio_set_direction(sda, GPIO_MODE_INPUT_OUTPUT);
+    ets_delay_us(delay);
+    gpio_set_level(sda, 1);
+    gpio_set_direction(sda, GPIO_MODE_OUTPUT);
 }
 
 
-static uint8_t sw_i2c_read_byte(gpio_num_t scl, gpio_num_t sda, uint32_t delay, bool ack)
+static uint8_t sw_i2c_read_byte(gpio_num_t scl, gpio_num_t sda, uint32_t delay)
 {
     uint8_t byte = 0;
     gpio_set_direction(sda, GPIO_MODE_INPUT);
@@ -180,12 +180,39 @@ static uint8_t sw_i2c_read_byte(gpio_num_t scl, gpio_num_t sda, uint32_t delay, 
 
     // ACK Phase
     gpio_set_direction(sda, GPIO_MODE_OUTPUT);
-    gpio_set_level(sda, ack ? 0 : 1);
+    gpio_set_level(sda, 1);
+    gpio_set_direction(sda, GPIO_MODE_INPUT);
+    gpio_set_level(scl, 1);
+    int ack = gpio_get_level(sda);
+    ets_delay_us(delay);
+    gpio_set_level(scl, 0);
+    ets_delay_us(delay);
+    gpio_set_level(sda, 1);
+    gpio_set_direction(sda, GPIO_MODE_OUTPUT);
+    return byte;
+}
+
+static void i2c_setup(gpio_num_t scl, gpio_num_t sda, gpio_num_t ldac)
+{
+    gpio_set_direction(scl, GPIO_MODE_OUTPUT);
+    gpio_set_direction(sda, GPIO_MODE_OUTPUT);
+    gpio_set_direction(ldac, GPIO_MODE_OUTPUT);
+
+    gpio_set_level(ldac, 1);
+    gpio_set_level(sda, 1);
+    gpio_set_level(scl, 1);
+}
+
+static void i2c_done(gpio_num_t scl, gpio_num_t sda, gpio_num_t ldac, uint32_t delay)
+{
+    gpio_set_level(sda, 0);
     ets_delay_us(delay);
     gpio_set_level(scl, 1);
     ets_delay_us(delay);
-    gpio_set_level(scl, 0);
-    return byte;
+    gpio_set_level(ldac, 1);
+    ets_delay_us(delay);
+    gpio_set_level(sda, 1);
+    ets_delay_us(delay);
 }
 
 
@@ -194,14 +221,12 @@ uint8_t mcp_read_address_bits(gpio_num_t scl, gpio_num_t sda, gpio_num_t ldac)
     uint32_t frequenzy = 100000;
     uint32_t delay = 1000000 / (frequenzy * 2);
 
-    gpio_set_direction(scl, GPIO_MODE_OUTPUT);
-    gpio_set_direction(sda, GPIO_MODE_INPUT_OUTPUT_OD);
-    gpio_set_direction(ldac, GPIO_MODE_OUTPUT);
+    i2c_setup(scl, sda, ldac);
+    ets_delay_us(delay);
 
-    gpio_set_level(ldac, 1);
-    gpio_set_level(scl, 0);
     gpio_set_level(sda, 0);
     ets_delay_us(delay);
+    gpio_set_level(scl, 0);
 
     sw_i2c_write_byte(scl, sda, ldac, MCP_GENERAL_CALL_ADDRESS, delay, false);
     sw_i2c_write_byte(scl, sda, ldac, MCP_GENERAL_CALL_READ_COMMAND, delay, true);
@@ -215,13 +240,9 @@ uint8_t mcp_read_address_bits(gpio_num_t scl, gpio_num_t sda, gpio_num_t ldac)
 
     sw_i2c_write_byte(scl, sda, ldac, MCP_GENERAL_CALL_RESTART, delay, false);
 
-    uint8_t data = sw_i2c_read_byte(scl, sda, delay, false);
+    uint8_t data = sw_i2c_read_byte(scl, sda, delay);
 
-    gpio_set_level(sda, 0);
-    ets_delay_us(delay);
-    gpio_set_level(scl, 1);
-    ets_delay_us(delay);
-    gpio_set_level(ldac, 1);
+    i2c_done(scl, sda, ldac, delay);
 
     return (data >> 5) & 0x07;
 }
@@ -232,14 +253,12 @@ void mcp_change_i2c_address(gpio_num_t scl, gpio_num_t sda, gpio_num_t ldac, uin
     uint32_t frequenzy = 100000;
     uint32_t delay = 1000000 / (frequenzy * 2);
 
-    gpio_set_direction(scl, GPIO_MODE_OUTPUT);
-    gpio_set_direction(sda, GPIO_MODE_INPUT_OUTPUT_OD);
-    gpio_set_direction(ldac, GPIO_MODE_OUTPUT);
-
-    gpio_set_level(ldac, 1);
-    gpio_set_level(sda, 0);
-    gpio_set_level(scl, 0);
+    i2c_setup(scl, sda, ldac);
     ets_delay_us(delay);
+
+    gpio_set_level(sda, 0);
+    ets_delay_us(delay);
+    gpio_set_level(scl, 0);
 
     uint8_t byte1 = (MCP_I2C_BASE_ADDRESS | (current_addr & 0x07)) << 1;
 
@@ -257,9 +276,5 @@ void mcp_change_i2c_address(gpio_num_t scl, gpio_num_t sda, gpio_num_t ldac, uin
 
     sw_i2c_write_byte(scl, sda, ldac, byte4, delay, false);
 
-    gpio_set_level(sda, 0);
-    ets_delay_us(delay);
-    gpio_set_level(scl, 1);
-    ets_delay_us(delay);
-    gpio_set_level(ldac, 1);
+    i2c_done(scl, sda, ldac, delay);
 }
