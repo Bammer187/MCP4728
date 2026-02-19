@@ -17,7 +17,7 @@ A lightweight, ESP-IDF compatible C driver for the MCP4728, a 12-bit, quad-chann
 
 ### Manual Integration
 
-Copy the source files (`ads1115.c`, `ads1115.h`, `CMakeLists.txt`) into your project's components or main directory. Ensure the header file is accessible within your include path.
+Copy the source files (`mcp4728.c`, `mcp4728.h`, `CMakeLists.txt`) into your project's components or main directory. Ensure the header file is accessible within your include path.
 
 ### Add as submodule
 `git submodule add https://github.com/Bammer187/MCP4728.git components/mcp4728`
