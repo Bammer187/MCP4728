@@ -116,7 +116,7 @@ esp_err_t mcp_set_vref(mcp4728_t *mcp, bool vrefA, bool vrefB, bool vrefC, bool 
 
     uint8_t b[1];
 
-    b[0] = MCP_GAIN_WRITE | ((gainA & 0x01) << 3) | ((gainB & 0x01) << 2) | ((gainC & 0x01) << 1) | (gainD & 0x01);
+    b[0] = MCP_GAIN_WRITE | ((vrefA & 0x01) << 3) | ((vrefB & 0x01) << 2) | ((vrefC & 0x01) << 1) | (vrefD & 0x01);
     
     return i2c_master_transmit(mcp->dev_handle, b, 1, MCP_I2C_TIMEOUT_MS);
 }
@@ -139,7 +139,9 @@ esp_err_t mcp_set_gains(mcp4728_t *mcp, mcp4728_gain_t gainA, mcp4728_gain_t gai
 {
     if (mcp == NULL || mcp->dev_handle == NULL) return ESP_ERR_INVALID_ARG;
 
-    uint8_t b = MCP_GAIN_WRITE | ((gainA & 0x01) << 3) | ((gainB & 0x01) << 2) | ((gainC & 0x01) << 1) | (gainD & 0x01);
+    uint8_t b[1];
+    
+    b[0] = MCP_GAIN_WRITE | ((gainA & 0x01) << 3) | ((gainB & 0x01) << 2) | ((gainC & 0x01) << 1) | (gainD & 0x01);
     
     return i2c_master_transmit(mcp->dev_handle, b, 1, MCP_I2C_TIMEOUT_MS);
 }

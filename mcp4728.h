@@ -77,7 +77,7 @@ typedef struct {
 } mcp4728_channel_config_t;
 
 typedef struct {
-	i2c_master_dev_handle_t dev_handle;
+	i2c_master_dev_handle_t *dev_handle;
 }mcp4728_t;
 
 /**
