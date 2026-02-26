@@ -1,17 +1,22 @@
-/**
- * Continuously increments a 12-bit counter and updates Channel A using 
- * the Single Write command. The output voltage is calculated based on a 
- * 3.3V VDD reference and logged to the console alongside the raw DAC value.
- * 
- *                      PINOUT CONFIGURATION
- * | MCP4728 Pin | Function      | ESP32 Connection | Notes              |
- * |-------------|---------------|------------------|--------------------|
- * | 1  (VDD)    | Power Supply  | 3.3V             | 2.7V - 5.5V Range  |
- * | 2  (SCL)    | I2C Clock     | GPIO 22          | Req. Pull-up       |
- * | 3  (SDA)    | I2C Data      | GPIO 21          | Req. Pull-up       |
- * | 6  (VOUTA)  | DAC Output A  | -                | Output Voltage     |
- * | 10 (VSS)    | Ground        | GND              | Common Ground      |
+/*
+ * SPDX-FileCopyrightText: 2026 Lukas Bammer
+ *
+ * SPDX-License-Identifier: MIT
  */
+/*
+   Continuously increments a 12-bit counter and updates Channel A using 
+   the Single Write command. The output voltage is calculated based on a 
+   3.3V VDD reference and logged to the console alongside the raw DAC value.
+
+                        PINOUT CONFIGURATION
+   | MCP4728 Pin | Function      | ESP32 Connection | Notes              |
+   |-------------|---------------|------------------|--------------------|
+   | 1  (VDD)    | Power Supply  | 3.3V             | 2.7V - 5.5V Range  |
+   | 2  (SCL)    | I2C Clock     | GPIO 22          | Req. Pull-up       |
+   | 3  (SDA)    | I2C Data      | GPIO 21          | Req. Pull-up       |
+   | 6  (VOUTA)  | DAC Output A  | -                | Output Voltage     |
+   | 10 (VSS)    | Ground        | GND              | Common Ground      |
+*/
 
 #include "freertos/FreeRTOS.h"
 #include "driver/i2c_master.h"

@@ -1,16 +1,21 @@
-/**
- * Changes the I2C programmable addres bits to 100b / 0x04.
- * The current address is read and then changed.
- * 
- *                      PINOUT CONFIGURATION
- * | MCP4728 Pin | Function          | ESP32 Connection | Notes              |
- * |-------------|-------------------|------------------|--------------------|
- * | 1  (VDD)    | Power Supply      | 3.3V             | 2.7V - 5.5V Range  |
- * | 2  (SCL)    | I2C Clock         | GPIO 22          | Req. Pull-up       |
- * | 3  (SDA)    | I2C Data          | GPIO 21          | Req. Pull-up       |
- * | 4  (LDAC)   | Device Selection  | GPIO 27          | -                  |
- * | 10 (VSS)    | Ground            | GND              | Common Ground      |
+/*
+ * SPDX-FileCopyrightText: 2026 Lukas Bammer
+ *
+ * SPDX-License-Identifier: MIT
  */
+/*
+   Changes the I2C programmable addres bits to 100b / 0x04.
+   The current address is read and then changed.
+
+                        PINOUT CONFIGURATION
+   | MCP4728 Pin | Function          | ESP32 Connection | Notes              |
+   |-------------|-------------------|------------------|--------------------|
+   | 1  (VDD)    | Power Supply      | 3.3V             | 2.7V - 5.5V Range  |
+   | 2  (SCL)    | I2C Clock         | GPIO 22          | Req. Pull-up       |
+   | 3  (SDA)    | I2C Data          | GPIO 21          | Req. Pull-up       |
+   | 4  (LDAC)   | Device Selection  | GPIO 27          | -                  |
+   | 10 (VSS)    | Ground            | GND              | Common Ground      |
+*/
 
 #include "freertos/FreeRTOS.h"
 #include "esp_log.h"
