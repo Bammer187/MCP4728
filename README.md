@@ -21,7 +21,7 @@ Copy the source files (`mcp4728.c`, `mcp4728.h`, `CMakeLists.txt`) into your pro
 
 ### ESP-IDF Component Manager
 
-`idf.py add-dependency "bammer187/mcp4728^1.0.1"`
+`idf.py add-dependency "bammer187/mcp4728^1.0.2"`
 
 ### Add as submodule
 `git submodule add https://github.com/Bammer187/MCP4728.git components/mcp4728`
